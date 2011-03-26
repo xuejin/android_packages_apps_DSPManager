@@ -16,6 +16,7 @@ import android.media.audiofx.AudioEffect;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.Virtualizer;
+import android.media.AudioManager;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -79,30 +80,6 @@ public class HeadsetService extends Service {
 		}
 	};
 
-	private final BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			/* Work out what device was connected. Must be something that handles audio. */
-			BluetoothDevice bd = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-			BluetoothClass bdc = bd.getBluetoothClass();
-			if (bdc == null) {
-				Log.i(TAG, intent.getAction() + ": missing class information on device: " + bd);
-				return;
-			}
-			
-			Log.i(TAG, intent.getAction() + ": bluetooth class is " + bdc);
-			if (bdc.getMajorDeviceClass() != BluetoothClass.Device.Major.AUDIO_VIDEO) {
-				return;
-			}
-			
-			/* I don't actually know at this point if user will actually enable this device,
-			 * or whether it just remains "connected". Knowing this would be useful.
-			 */
-			bluetoothAudio = intent.getAction().equals(BluetoothDevice.ACTION_ACL_CONNECTED);
-			Log.i(TAG, "Bluetooth plugged: " + bluetoothAudio);
-		}
-	};
-
 	private final PhoneStateListener mPhoneListener = new PhoneStateListener() {
 		@Override
 		public void onCallStateChanged(int state, String incomingNumber) {
@@ -116,7 +93,6 @@ public class HeadsetService extends Service {
 				inCall = false;
 				break;
 			}
-
 			updateDsp();
 		}
 	};
@@ -150,13 +126,8 @@ public class HeadsetService extends Service {
 		TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		tm.listen(mPhoneListener, PhoneStateListener.LISTEN_CALL_STATE);
 		
-        registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
-        registerReceiver(preferenceUpdateReceiver, new IntentFilter("com.bel.android.dspmanager.UPDATE"));
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        registerReceiver(bluetoothReceiver, filter);
+                registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
+                registerReceiver(preferenceUpdateReceiver, new IntentFilter("com.bel.android.dspmanager.UPDATE"));
 	}
 	
 	@Override
@@ -168,7 +139,6 @@ public class HeadsetService extends Service {
 		
 		unregisterReceiver(headsetReceiver);
 		unregisterReceiver(preferenceUpdateReceiver);
-		unregisterReceiver(bluetoothReceiver);
 		TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		tm.listen(mPhoneListener, 0);
 	}
@@ -183,6 +153,9 @@ public class HeadsetService extends Service {
 	 */
 	protected void updateDsp() {
 		final String mode;
+                Context context = getApplicationContext();
+                AudioManager mAudioManager = (AudioManager)context.getSystemService(context.AUDIO_SERVICE);
+                bluetoothAudio = mAudioManager.isBluetoothA2dpOn();
 		
 		if (inCall) {
 			/* During calls, everything gets disabled; there is no configuration called 'disable' */
