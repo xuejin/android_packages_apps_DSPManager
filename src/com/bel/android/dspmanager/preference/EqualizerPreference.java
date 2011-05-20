@@ -62,7 +62,7 @@ public class EqualizerPreference extends DialogPreference {
 				levels[i] = value;
 			}
 			notifyChanged();
-		} else {
+		} else if (listEqualizer != null) {
 			refreshPreferenceFromEqualizer(listEqualizer);
 		}
 	}

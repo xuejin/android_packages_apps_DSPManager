@@ -46,6 +46,7 @@ public class HeadsetService extends Service {
 	
     public static final UUID EFFECT_TYPE_NULL = UUID.fromString("ec7178ec-e5e1-4432-a3f4-4657e6795210");
 
+    private AudioManager mAudioManager;
     private AudioEffect compression;
 	private Equalizer equalizer;
 	private Virtualizer virtualizer;
@@ -54,8 +55,6 @@ public class HeadsetService extends Service {
 	protected boolean useHeadphone;
 
 	protected boolean inCall;
-
-	protected boolean bluetoothAudio;
 
 	/**
 	 * Update audio parameters when preferences have been updated.
@@ -128,6 +127,8 @@ public class HeadsetService extends Service {
 		
                 registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
                 registerReceiver(preferenceUpdateReceiver, new IntentFilter("com.bel.android.dspmanager.UPDATE"));
+                Context context = getApplicationContext();
+                mAudioManager = (AudioManager)context.getSystemService(context.AUDIO_SERVICE);
 	}
 	
 	@Override
@@ -153,14 +154,11 @@ public class HeadsetService extends Service {
 	 */
 	protected void updateDsp() {
 		final String mode;
-                Context context = getApplicationContext();
-                AudioManager mAudioManager = (AudioManager)context.getSystemService(context.AUDIO_SERVICE);
-                bluetoothAudio = mAudioManager.isBluetoothA2dpOn();
 		
 		if (inCall) {
 			/* During calls, everything gets disabled; there is no configuration called 'disable' */
 			mode = "disable";
-		} else if (bluetoothAudio) {
+		} else if (mAudioManager.isBluetoothA2dpOn()) {
 			/* Bluetooth takes precedence over everything else */
 			mode = "bluetooth";
 		} else {
