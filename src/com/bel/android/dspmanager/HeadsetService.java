@@ -1,22 +1,22 @@
 package com.bel.android.dspmanager;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import android.app.Notification;
 import android.app.Service;
-import android.bluetooth.BluetoothClass;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.Virtualizer;
-import android.media.AudioManager;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -40,14 +40,17 @@ import com.bel.android.dspmanager.activity.DSPManager;
  * @author alankila
  */
 public class HeadsetService extends Service {
+	public static final String NAME = "com.bel.android.dspmanager.HEADSET_SERVICE";
+
 	protected static final String TAG = HeadsetService.class.getSimpleName();
 
 	public static final UUID EFFECT_TYPE_VOLUME = UUID.fromString("09e8ede0-ddde-11db-b4f6-0002a5d5c51b");
 	
     public static final UUID EFFECT_TYPE_NULL = UUID.fromString("ec7178ec-e5e1-4432-a3f4-4657e6795210");
 
+    protected Map<Integer, AudioEffect> compressionSessions = new HashMap<Integer, AudioEffect>();
+
     private AudioManager mAudioManager;
-    private AudioEffect compression;
 	private Equalizer equalizer;
 	private Virtualizer virtualizer;
 	private BassBoost bassBoost;
@@ -55,6 +58,37 @@ public class HeadsetService extends Service {
 	protected boolean useHeadphone;
 
 	protected boolean inCall;
+
+	/**
+	 * Receive new broadcast intents for adding DSP to session
+	 */
+    private final BroadcastReceiver audioSessionReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int sessionId = intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, 0);
+			if (intent.getAction().equals(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION)) {
+				try {
+					/* The AudioEffect with UUID constructor is not visible in SDK, but
+					 * it is available via reflection. Here's a kind request to Google:
+					 * please expose this method, and the parameter APIs, to make it
+					 * possible to create custom audio effects in ways that doesn't
+					 * look like absolute shit. */
+					AudioEffect compression = AudioEffect.class
+					.getConstructor(UUID.class, UUID.class, Integer.TYPE, Integer.TYPE)
+					.newInstance(EFFECT_TYPE_VOLUME, EFFECT_TYPE_NULL, 0, sessionId);
+					compressionSessions.put(sessionId, compression);
+				}
+				catch (Exception e) {
+					Log.i(TAG, "Unable to construct compression audio effect.", e);
+					return;
+				}
+			}
+			if (intent.getAction().equals(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION)) {
+				compressionSessions.remove(sessionId);
+			}
+			updateDsp();
+		}
+	};
 
 	/**
 	 * Update audio parameters when preferences have been updated.
@@ -84,11 +118,11 @@ public class HeadsetService extends Service {
 		public void onCallStateChanged(int state, String incomingNumber) {
 			switch (state) {
 			default:
-				Log.i(TAG, "Disabling DSP during call.");
+				Log.i(TAG, "During phone call: disable DSP.");
 				inCall = true;
 				break;
 			case TelephonyManager.CALL_STATE_IDLE:
-				Log.i(TAG, "Enabling DSP after call has ended.");
+				Log.i(TAG, "Phone status idle: enable DSP.");
 				inCall = false;
 				break;
 			}
@@ -101,21 +135,6 @@ public class HeadsetService extends Service {
 		super.onCreate();
 		Log.i(TAG, "Starting service.");
 
-		try {
-			/* The AudioEffect with UUID constructor is not visible in SDK, but
-			 * it is available via reflection. Here's a kind request to Google:
-			 * please expose this method, and the parameter APIs, to make it
-			 * possible to create audio effects that aren't part of the official
-			 * platform without having to patch the platform itself. */
-			compression = AudioEffect.class
-			.getConstructor(UUID.class, UUID.class, Integer.TYPE, Integer.TYPE)
-			.newInstance(EFFECT_TYPE_VOLUME, EFFECT_TYPE_NULL, 0, 0);
-			/* Also, setParameter and getParameter() are hidden,
-			 * but both their signatures are byte[], byte[]. */
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to construct EFFECT_TYPE_VOLUME", e);
-		}
-
 		equalizer = new Equalizer(0, 0);
 		virtualizer = new Virtualizer(0, 0);
 		bassBoost = new BassBoost(0, 0);
@@ -124,11 +143,15 @@ public class HeadsetService extends Service {
 		
 		TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		tm.listen(mPhoneListener, PhoneStateListener.LISTEN_CALL_STATE);
-		
-                registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
-                registerReceiver(preferenceUpdateReceiver, new IntentFilter("com.bel.android.dspmanager.UPDATE"));
-                Context context = getApplicationContext();
-                mAudioManager = (AudioManager)context.getSystemService(context.AUDIO_SERVICE);
+			
+		IntentFilter audioFilter = new IntentFilter();
+		audioFilter.addAction(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
+		audioFilter.addAction(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
+		registerReceiver(audioSessionReceiver, audioFilter);
+		registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
+		registerReceiver(preferenceUpdateReceiver, new IntentFilter(DSPManager.ACTION_UPDATE_PREFERENCES));
+		Context context = getApplicationContext();
+		mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 	}
 	
 	@Override
@@ -138,6 +161,7 @@ public class HeadsetService extends Service {
 
 		stopForeground(true);
 		
+		unregisterReceiver(audioSessionReceiver);
 		unregisterReceiver(headsetReceiver);
 		unregisterReceiver(preferenceUpdateReceiver);
 		TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
@@ -167,12 +191,12 @@ public class HeadsetService extends Service {
 		}
 		SharedPreferences preferences = getSharedPreferences(DSPManager.SHARED_PREFERENCES_BASENAME + "." + mode, 0);
 
-		{
+		for (AudioEffect compression : compressionSessions.values()) {
 			compression.setEnabled(preferences.getBoolean("dsp.compression.enable", false));
-			int strength = preferences.getInt("dsp.compression.strength", 0);
+			short strength = Short.valueOf(preferences.getString("dsp.compression.mode", "0"));
 			try {
 				Method setParameter = AudioEffect.class.getMethod("setParameter", byte[].class, byte[].class);
-				setParameter.invoke(compression, new byte[] { 0, 0, 0, 0, (byte) (strength >> 8), (byte) (strength & 0xff) }, new byte[4]);
+				setParameter.invoke(compression, new byte[] { 0, 0, 0, 0, (byte) (strength & 0xff), (byte) (strength >> 8) }, new byte[] { 0, 0, 0, 0 });
 				/* Return array ignored, anyway... */
 			}
 			catch (Exception e) {
