@@ -128,17 +128,17 @@ public class EqualizerPreference extends DialogPreference {
 	@Override
 	protected Parcelable onSaveInstanceState () {
 		Parcelable superState = super.onSaveInstanceState();
-		Levels savedLevels = new Levels(superState);
-		savedLevels.setLevels(levels);
-		savedLevels.setInitialLevels(initialLevels);
+		SavedLevels savedLevels = new SavedLevels(superState);
+		savedLevels.levels = levels;
+		savedLevels.initialLevels = initialLevels;
 		return savedLevels;
 	}
 
         @Override
         protected void onRestoreInstanceState (Parcelable state) {
-		Levels levelsState = (Levels)state;
-		levels = levelsState.getLevels();
-		initialLevels = levelsState.getInitialLevels();
+		SavedLevels levelsState = (SavedLevels)state;
+		levels = levelsState.levels;
+		initialLevels = levelsState.initialLevels;
 		super.onRestoreInstanceState (levelsState.getSuperState());
 	}
 
@@ -146,7 +146,7 @@ public class EqualizerPreference extends DialogPreference {
 		onSetInitialValue(true, "0.0;0.0;0.0;0.0;0.0;0.0;");
 	}
 
-	public static class Levels extends BaseSavedState {
+	public static class SavedLevels extends BaseSavedState {
 		private float[] initialLevels;
 		private float[] levels;
 
@@ -156,39 +156,24 @@ public class EqualizerPreference extends DialogPreference {
 			out.writeFloatArray(initialLevels);
 		}
 
-		public static final Parcelable.Creator<Levels> CREATOR = new Parcelable.Creator<Levels>() {
-			public Levels createFromParcel (Parcel in) {
-				return new Levels(in);
+		public static final Parcelable.Creator<SavedLevels> CREATOR = new Parcelable.Creator<SavedLevels>() {
+			public SavedLevels createFromParcel (Parcel in) {
+				return new SavedLevels(in);
 			}
 
-			public Levels[] newArray (int size) {
-				return new Levels[size];
+			public SavedLevels[] newArray (int size) {
+				return new SavedLevels[size];
 			}
 		};
 
-		private Levels (Parcel in) {
+		private SavedLevels (Parcel in) {
 			super(in);
 			in.readFloatArray(levels);
 			in.readFloatArray(initialLevels);
 		}
 
-		private Levels (Parcelable parcelable) {
+		private SavedLevels (Parcelable parcelable) {
 			super(parcelable);
-		}
-
-		public float[] getLevels () {
-			return levels;
-		}
-
-		public void setLevels (float[] levels) {
-			this.levels = levels;
-		}
-		public float[] getInitialLevels () {
-			return initialLevels;
-		}
-
-		public void setInitialLevels (float[] initialLevels) {
-			this.initialLevels = initialLevels;
 		}
 	}
 }
