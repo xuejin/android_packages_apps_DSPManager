@@ -43,6 +43,10 @@
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
+			<intent-filter>
+				<action android:name="com.bel.android.dspmanager.UPDATE" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
 		</receiver>
 	</application>
 

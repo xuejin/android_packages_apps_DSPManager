@@ -5,9 +5,12 @@
     <string name="headset_title">Headset</string>
     <string name="speaker_title">Phone Speaker</string>
     <string name="bluetooth_title">Bluetooth Device</string>
+    <string name="global_opt_title">Global options</string>
     <string name="dsp_settings_headset">DSP Settings - Headset</string>
     <string name="dsp_settings_speaker">DSP Settings - Phone Speaker</string>
     <string name="dsp_settings_bluetooth">DSP Settings - Bluetooth Device</string>
+    <string name="pref_compression_allow_title">Allow DRC</string>
+    <string name="pref_compression_allow_summary">Dynamic Range Compression needs DSPManager to be permanently running even if no effect is actually enabled.</string>
     <string name="pref_dsp_title">Dynamic Range Compression</string>
     <string name="pref_dsp_summary_on">Compression is enabled</string>
     <string name="pref_dsp_summary_off">Compression is disabled</string>

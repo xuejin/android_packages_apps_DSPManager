@@ -2,7 +2,8 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 	android:title="@string/dsp_settings_bluetooth">
-	<PreferenceCategory android:title="@string/pref_dsp_title">
+	<PreferenceCategory android:title="@string/pref_dsp_title"
+		android:key="pref_drc_category">
 		<CheckBoxPreference android:key="dsp.compression.enable"
 			android:summaryOn="@string/pref_dsp_summary_on" android:summaryOff="@string/pref_dsp_summary_off"
 			android:disableDependentsState="false" android:title="@string/pref_dsp_enable"></CheckBoxPreference>

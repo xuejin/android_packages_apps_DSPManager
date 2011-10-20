@@ -6,6 +6,8 @@ import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
+import android.preference.PreferenceScreen;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,7 +25,10 @@ import com.bel.android.dspmanager.preference.SummariedListPreference;
  * 
  * @author alankila
  */
-public final class DSPScreen extends PreferenceActivity {	
+public final class DSPScreen extends PreferenceActivity {
+
+	private PreferenceCategory mDRCPreferenceCategory;
+
 	private final OnSharedPreferenceChangeListener serviceLauncher = new OnSharedPreferenceChangeListener() {
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 			/* If the listpref is updated, copy the changed setting to the eq. */
@@ -85,6 +90,16 @@ public final class DSPScreen extends PreferenceActivity {
 		/* Register a listener that publishes UPDATE requests to the service starter. */
 		SharedPreferences preferences = getSharedPreferences(null, 0);
 		preferences.registerOnSharedPreferenceChangeListener(serviceLauncher);
+
+		PreferenceScreen prefSet = getPreferenceScreen();
+		mDRCPreferenceCategory = (PreferenceCategory) prefSet
+			.findPreference("pref_drc_category");
+		preferences = super.getSharedPreferences(DSPManager.SHARED_PREFERENCES_BASENAME + "_preferences", 0);
+		if (mDRCPreferenceCategory != null){
+			if (preferences.getBoolean("dsp.compression.allow", false))
+				mDRCPreferenceCategory.setEnabled(true);
+			else mDRCPreferenceCategory.setEnabled(false);
+		}
 	}
 	
 	@Override

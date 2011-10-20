@@ -10,4 +10,10 @@
 	<PreferenceScreen android:title="@string/bluetooth_title">
 		<intent android:action="com.bel.android.dspmanager.BLUETOOTH" />
 	</PreferenceScreen>
+	<PreferenceCategory android:title="@string/global_opt_title">
+		<CheckBoxPreference android:key="dsp.compression.allow"
+			android:title="@string/pref_compression_allow_title"
+			android:summary="@string/pref_compression_allow_summary">
+		</CheckBoxPreference>
+	</PreferenceCategory>
 </PreferenceScreen>

@@ -190,19 +190,21 @@ public class HeadsetService extends Service {
 			mode = useHeadphone ? "headset" : "speaker";
 		}
 		SharedPreferences preferences = getSharedPreferences(DSPManager.SHARED_PREFERENCES_BASENAME + "." + mode, 0);
+		SharedPreferences globPreferences = getSharedPreferences(DSPManager.SHARED_PREFERENCES_BASENAME + "_preferences", 0);
 
-		for (AudioEffect compression : compressionSessions.values()) {
-			compression.setEnabled(preferences.getBoolean("dsp.compression.enable", false));
-			short strength = Short.valueOf(preferences.getString("dsp.compression.mode", "0"));
-			try {
-				Method setParameter = AudioEffect.class.getMethod("setParameter", byte[].class, byte[].class);
-				setParameter.invoke(compression, new byte[] { 0, 0, 0, 0, (byte) (strength & 0xff), (byte) (strength >> 8) }, new byte[] { 0, 0, 0, 0 });
-				/* Return array ignored, anyway... */
+		if (globPreferences.getBoolean("dsp.compression.allow", false))
+			for (AudioEffect compression : compressionSessions.values()) {
+				compression.setEnabled(preferences.getBoolean("dsp.compression.enable", false));
+				short strength = Short.valueOf(preferences.getString("dsp.compression.mode", "0"));
+				try {
+					Method setParameter = AudioEffect.class.getMethod("setParameter", byte[].class, byte[].class);
+					setParameter.invoke(compression, new byte[] { 0, 0, 0, 0, (byte) (strength & 0xff), (byte) (strength >> 8) }, new byte[] { 0, 0, 0, 0 });
+					/* Return array ignored, anyway... */
+				}
+				catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
 		
 		{
 			bassBoost.setEnabled(preferences.getBoolean("dsp.bass.enable", false));
