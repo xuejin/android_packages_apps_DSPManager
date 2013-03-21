@@ -5,6 +5,7 @@
     <string name="headset_title">有線耳機</string>
     <string name="speaker_title">手機喇叭</string>
     <string name="bluetooth_title">藍牙裝置</string>
+    <string name="global_opt_title">全局選項</string>
     <string name="dsp_settings_headset">數位訊號處理（DSP）設定－有線耳機</string>
     <string name="dsp_settings_speaker">數位訊號處理（DSP）設定－手機喇叭</string>
     <string name="dsp_settings_bluetooth">數位訊號處理（DSP）設定－藍牙裝置</string>
