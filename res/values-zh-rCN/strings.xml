@@ -10,6 +10,8 @@
     <string name="dsp_settings_headset">DSP设置-耳机</string>
     <string name="dsp_settings_speaker">DSP设置-电话扬声器</string>
     <string name="dsp_settings_bluetooth">DSP设置-蓝牙设备</string>
+    <string name="pref_compression_allow_title">允许DRC</string>
+    <string name="pref_compression_allow_summary">动态压缩需要DSP管理器永久运行,即使没有效果实际上是启用的.</string>
     <string name="pref_equalizer_loudness_title">响度补偿</string>
     <string name="pref_bassboost_title">低音增强</string>
     <string name="pref_bassboost_summary_on">开启低音增强</string>
