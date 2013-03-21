@@ -34,6 +34,7 @@
     <string name="pref_headset_virtual_enable">启用</string>
     <string name="pref_room_title">选择空间类型</string>
     <string name="dialog_room">空间类型</string>
+    <string name="menu_reset">重置</string>
 
     <string name="eq_preset_acoustic">原音音乐</string>
     <string name="eq_preset_bass_booster">低音强化</string>
