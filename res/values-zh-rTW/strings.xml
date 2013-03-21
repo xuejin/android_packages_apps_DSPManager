@@ -9,6 +9,7 @@
     <string name="dsp_settings_headset">數位訊號處理（DSP）設定－有線耳機</string>
     <string name="dsp_settings_speaker">數位訊號處理（DSP）設定－手機喇叭</string>
     <string name="dsp_settings_bluetooth">數位訊號處理（DSP）設定－藍牙裝置</string>
+    <string name="pref_compression_allow_title">允許DRC</string>
     <string name="pref_dsp_title">動態範圍壓縮（DRC）</string>
     <string name="pref_dsp_summary_on">已啟用壓縮</string>
     <string name="pref_dsp_summary_off">已停用壓縮</string>
